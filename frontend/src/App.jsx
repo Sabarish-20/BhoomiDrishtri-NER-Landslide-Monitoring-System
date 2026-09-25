@@ -114,9 +114,9 @@ export default function App() {
       )}
 
       {/* Main Workspace Layout */}
-      <div className="flex-1 flex relative overflow-hidden">
+      <div className="flex-1 flex relative overflow-hidden min-w-0">
         {/* Central 3D/2D GIS Map */}
-        <div className="flex-1 h-full relative">
+        <div className="flex-1 min-w-0 h-full relative">
           <CorridorMap
             corridorData={corridorData}
             selectedSegment={selectedSegment}

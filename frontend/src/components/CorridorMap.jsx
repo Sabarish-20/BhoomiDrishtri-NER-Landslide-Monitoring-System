@@ -61,6 +61,7 @@ export default function CorridorMap({
   const tileLayerRef = useRef(null);
   const geojsonLayerRef = useRef(null);
   const markersLayerRef = useRef(null);
+  const hasFittedBoundsRef = useRef(false);
 
   const [activeProvider, setActiveProvider] = useState('osm');
   const [showDepots, setShowDepots] = useState(true);
@@ -88,12 +89,37 @@ export default function CorridorMap({
     markersLayerRef.current = L.layerGroup().addTo(map);
     mapInstance.current = map;
 
+    // Trigger initial size computation
+    setTimeout(() => {
+      map.invalidateSize();
+    }, 200);
+
     return () => {
       if (mapInstance.current) {
         mapInstance.current.remove();
         mapInstance.current = null;
       }
     };
+  }, []);
+
+  // Handle map resizing when Geotechnical Inspector drawer toggles
+  useEffect(() => {
+    if (mapInstance.current) {
+      const timer = setTimeout(() => {
+        mapInstance.current.invalidateSize();
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [selectedSegment]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (mapInstance.current) {
+        mapInstance.current.invalidateSize();
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   // Switch Tile Provider
@@ -162,6 +188,19 @@ export default function CorridorMap({
     }).addTo(map);
 
     geojsonLayerRef.current = geoLayer;
+
+    // Automatically fit corridor bounds on initial load
+    if (corridorData.features && corridorData.features.length > 0 && !hasFittedBoundsRef.current) {
+      try {
+        const bounds = geoLayer.getBounds();
+        if (bounds.isValid()) {
+          map.fitBounds(bounds, { padding: [40, 40] });
+          hasFittedBoundsRef.current = true;
+        }
+      } catch (e) {
+        console.warn('fitBounds error:', e);
+      }
+    }
   }, [corridorData, selectedSegment, onSelectSegment]);
 
   // Render Markers (BRO Depots & Crowdsource Clusters)
@@ -235,15 +274,24 @@ export default function CorridorMap({
 
   const fitCorridor = () => {
     if (!mapInstance.current) return;
-    mapInstance.current.flyTo([25.790, 91.885], 11, { duration: 1.2 });
+    if (geojsonLayerRef.current) {
+      try {
+        const bounds = geojsonLayerRef.current.getBounds();
+        if (bounds.isValid()) {
+          mapInstance.current.fitBounds(bounds, { padding: [40, 40] });
+          return;
+        }
+      } catch (e) {}
+    }
+    mapInstance.current.flyTo([25.790, 91.885], 11, { duration: 1.0 });
   };
 
   const features = corridorData?.features || [];
 
   return (
-    <div className="relative w-full h-full overflow-hidden bg-slate-950 flex flex-col select-none">
+    <div className="relative w-full h-full min-w-0 overflow-hidden bg-slate-950 flex flex-col select-none">
       {/* Top Floating Map Controls */}
-      <div className="absolute top-4 left-4 z-[400] flex flex-wrap items-center gap-2">
+      <div className="absolute top-4 left-4 z-[500] flex flex-wrap items-center gap-2">
         <div className="flex items-center gap-1.5 p-1.5 rounded-xl bg-slate-900/90 border border-slate-800/80 backdrop-blur-md shadow-2xl">
           {/* Fit View Button */}
           <button
@@ -327,12 +375,12 @@ export default function CorridorMap({
       </div>
 
       {/* Main Map Viewport */}
-      <div className="flex-1 w-full relative">
+      <div className="flex-1 w-full relative min-h-0">
         <div ref={mapContainer} className="w-full h-full" />
       </div>
 
       {/* Interactive 30m Longitudinal Elevation & Risk Cross-Section Ribbon */}
-      <div className="h-36 bg-slate-900/95 border-t border-slate-800/90 backdrop-blur-xl p-3 z-[400] flex flex-col justify-between">
+      <div className="h-36 bg-slate-900/95 border-t border-slate-800/90 backdrop-blur-xl p-3 z-10 flex flex-col justify-between flex-shrink-0 min-w-0">
         <div className="flex items-center justify-between text-[11px] mb-1">
           <div className="flex items-center gap-2">
             <span className="font-bold text-white flex items-center gap-1">
@@ -350,7 +398,7 @@ export default function CorridorMap({
         </div>
 
         {/* 30m Chainage Interactive Ribbon */}
-        <div className="relative w-full h-14 bg-slate-950 rounded-lg border border-slate-800 flex items-end p-1 overflow-x-auto gap-[1px]">
+        <div className="relative w-full max-w-full h-14 bg-slate-950 rounded-lg border border-slate-800 flex items-end p-1 overflow-hidden">
           {features.length > 0 ? (
             features.map((feat, idx) => {
               const props = feat.properties;
@@ -364,7 +412,7 @@ export default function CorridorMap({
                   onClick={() => onSelectSegment(props)}
                   onMouseEnter={() => setHoveredInfo(props)}
                   onMouseLeave={() => setHoveredInfo(null)}
-                  className={`flex-1 min-w-[2px] transition-all cursor-pointer rounded-t-sm hover:brightness-150 ${
+                  className={`flex-1 min-w-0 transition-all cursor-pointer rounded-t-sm hover:brightness-150 ${
                     isSelected ? 'ring-2 ring-white z-20 scale-y-110' : ''
                   }`}
                   style={{
@@ -394,7 +442,7 @@ export default function CorridorMap({
 
       {/* Hover Info Tooltip */}
       {hoveredInfo && (
-        <div className="absolute top-16 left-4 z-[500] p-3 rounded-xl bg-slate-900/95 border border-slate-700/80 backdrop-blur-md shadow-2xl pointer-events-none min-w-[240px] animate-fade-in">
+        <div className="absolute top-16 left-4 z-20 p-3 rounded-xl bg-slate-900/95 border border-slate-700/80 backdrop-blur-md shadow-2xl pointer-events-none min-w-[240px] animate-fade-in">
           <div className="flex items-center justify-between gap-2 mb-1.5">
             <span className="text-xs font-bold text-white tracking-wide">{hoveredInfo.landmark || hoveredInfo.id}</span>
             <span
@@ -414,7 +462,7 @@ export default function CorridorMap({
       )}
 
       {/* Map Legend */}
-      <div className="absolute bottom-40 left-4 z-[400] p-2.5 rounded-xl bg-slate-900/90 border border-slate-800/80 backdrop-blur-md shadow-xl text-xs flex flex-col gap-1.5">
+      <div className="absolute bottom-40 left-4 z-10 p-2.5 rounded-xl bg-slate-900/90 border border-slate-800/80 backdrop-blur-md shadow-xl text-xs flex flex-col gap-1.5">
         <div className="font-semibold text-slate-200 text-[10px] flex items-center justify-between">
           <span>Hazard Level (FS Threshold)</span>
         </div>

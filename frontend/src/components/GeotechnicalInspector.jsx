@@ -37,7 +37,7 @@ export default function GeotechnicalInspector({ segment, onClose, onOpenLogistic
   }
 
   return (
-    <div className="w-96 bg-slate-900/95 border-l border-slate-800 backdrop-blur-xl h-full flex flex-col shadow-2xl z-30 overflow-hidden select-none animate-slide-left">
+    <div className="w-96 flex-shrink-0 bg-slate-900/95 border-l border-slate-800 backdrop-blur-xl h-full flex flex-col shadow-2xl z-30 overflow-hidden select-none animate-slide-left">
       {/* Drawer Header */}
       <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/60">
         <div>

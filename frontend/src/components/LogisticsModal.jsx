@@ -47,7 +47,7 @@ export default function LogisticsModal({ isOpen, onClose, defaultTargetKm = 52.5
   return (
     <div
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-fade-in select-none"
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in select-none"
     >
       <div
         onClick={(e) => e.stopPropagation()}

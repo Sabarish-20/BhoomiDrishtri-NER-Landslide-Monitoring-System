@@ -55,10 +55,6 @@ export default function StormSimulator({
     try {
       const res = await triggerStormSimulation(rainIntensity, antecedentDays, activePreset || 'Custom Deluge');
       if (onStormTriggered) onStormTriggered(res);
-      // If severe storm triggered, prompt CAP alert
-      if (rainIntensity >= 60.0 && onOpenCapAlert) {
-        setTimeout(() => onOpenCapAlert(), 600);
-      }
     } catch (err) {
       console.error('Failed to trigger storm simulation:', err);
     } finally {
