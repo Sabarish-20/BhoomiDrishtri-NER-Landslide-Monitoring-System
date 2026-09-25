@@ -4,41 +4,40 @@ import { Layers, Compass, Eye, ShieldAlert, Wrench, AlertTriangle, MapPin, ZoomI
 
 const CARTO_KEY = import.meta.env.VITE_CARTO_API_KEY || 'cb1_3xoj_1_f33b361506cf6c1f100c6055';
 
-// Robust Basemap Providers with multi-subdomain CDN fallbacks
+// Multi-Basemap Providers (High-Reliability & Free of Watermarks)
 const BASEMAP_PROVIDERS = {
-  dark: {
-    name: 'CARTO Dark Matter',
-    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+  osm: {
+    name: 'OpenStreetMap',
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     options: {
-      subdomains: 'abcd',
+      subdomains: ['a', 'b', 'c'],
       maxZoom: 19,
-      attribution: '© <a href="https://carto.com/">CARTO</a> | © OpenStreetMap contributors'
-    }
-  },
-  voyager: {
-    name: 'CARTO Voyager (Topographic)',
-    url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-    options: {
-      subdomains: 'abcd',
-      maxZoom: 19,
-      attribution: '© <a href="https://carto.com/">CARTO</a> | © OpenStreetMap'
+      attribution: '© OpenStreetMap contributors'
     }
   },
   satellite: {
-    name: 'Esri Satellite & Elevation',
+    name: 'Satellite & Terrain',
     url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
     options: {
-      maxZoom: 18,
+      maxZoom: 19,
       attribution: '© Esri, Maxar, Earthstar Geographics'
     }
   },
-  osm: {
-    name: 'OpenStreetMap Standard',
-    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+  topo: {
+    name: 'OpenTopoMap',
+    url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
     options: {
-      subdomains: 'abc',
-      maxZoom: 19,
-      attribution: '© OpenStreetMap contributors'
+      subdomains: ['a', 'b', 'c'],
+      maxZoom: 17,
+      attribution: '© OpenTopoMap, © OpenStreetMap'
+    }
+  },
+  dark: {
+    name: 'Dark Canvas',
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+    options: {
+      maxZoom: 16,
+      attribution: '© Esri, HERE, Garmin'
     }
   }
 };
@@ -63,7 +62,7 @@ export default function CorridorMap({
   const geojsonLayerRef = useRef(null);
   const markersLayerRef = useRef(null);
 
-  const [activeProvider, setActiveProvider] = useState('dark');
+  const [activeProvider, setActiveProvider] = useState('osm');
   const [showDepots, setShowDepots] = useState(true);
   const [showClusters, setShowClusters] = useState(true);
   const [hoveredInfo, setHoveredInfo] = useState(null);
@@ -72,7 +71,6 @@ export default function CorridorMap({
   useEffect(() => {
     if (!mapContainer.current || mapInstance.current) return;
 
-    // Centroid of NH-106 corridor (Ri-Bhoi between Nongpoh & Shillong)
     const map = L.map(mapContainer.current, {
       center: [25.790, 91.885],
       zoom: 11,
@@ -83,8 +81,8 @@ export default function CorridorMap({
 
     L.control.zoom({ position: 'topright' }).addTo(map);
 
-    // Initial Tile Layer
-    const provider = BASEMAP_PROVIDERS.dark;
+    // Initial Tile Layer (OpenStreetMap / Esri Satellite)
+    const provider = BASEMAP_PROVIDERS.osm;
     tileLayerRef.current = L.tileLayer(provider.url, provider.options).addTo(map);
 
     markersLayerRef.current = L.layerGroup().addTo(map);
@@ -110,7 +108,6 @@ export default function CorridorMap({
     const provider = BASEMAP_PROVIDERS[providerKey];
     tileLayerRef.current = L.tileLayer(provider.url, provider.options).addTo(mapInstance.current);
     
-    // Ensure road layers stay on top
     if (geojsonLayerRef.current) {
       geojsonLayerRef.current.bringToFront();
     }
@@ -263,46 +260,46 @@ export default function CorridorMap({
           {/* Basemap Switcher */}
           <div className="flex items-center gap-1 bg-slate-950/90 p-1 rounded-lg border border-slate-800">
             <Layers className="w-3.5 h-3.5 text-cyan-400 ml-1" />
-            <span className="text-[10px] text-slate-400 font-semibold mr-1">BASEMAP:</span>
+            <span className="text-[10px] text-slate-400 font-semibold mr-1">MAP:</span>
             
             <button
-              onClick={() => handleProviderChange('dark')}
-              className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase transition-colors ${
-                activeProvider === 'dark' ? 'bg-cyan-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
+              onClick={() => handleProviderChange('osm')}
+              className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase transition-colors ${
+                activeProvider === 'osm' ? 'bg-cyan-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
               }`}
-              title="CARTO Dark Matter (Tactical GIS)"
+              title="OpenStreetMap Standard (High Detail Highway & Toponyms)"
             >
-              CARTO Dark
-            </button>
-
-            <button
-              onClick={() => handleProviderChange('voyager')}
-              className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase transition-colors ${
-                activeProvider === 'voyager' ? 'bg-cyan-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
-              }`}
-              title="CARTO Voyager (Topographic Contours)"
-            >
-              Voyager
+              OSM Map
             </button>
 
             <button
               onClick={() => handleProviderChange('satellite')}
-              className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase transition-colors ${
+              className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase transition-colors ${
                 activeProvider === 'satellite' ? 'bg-cyan-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
               }`}
-              title="Esri Satellite & Topography"
+              title="Esri Satellite Imagery (High-Res Mountain Terrain)"
             >
               Satellite
             </button>
 
             <button
-              onClick={() => handleProviderChange('osm')}
-              className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase transition-colors ${
-                activeProvider === 'osm' ? 'bg-cyan-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
+              onClick={() => handleProviderChange('topo')}
+              className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase transition-colors ${
+                activeProvider === 'topo' ? 'bg-cyan-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
               }`}
-              title="OpenStreetMap Standard"
+              title="OpenTopoMap (Topographic Contours & Elevation)"
             >
-              OSM
+              Topo
+            </button>
+
+            <button
+              onClick={() => handleProviderChange('dark')}
+              className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase transition-colors ${
+                activeProvider === 'dark' ? 'bg-cyan-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
+              }`}
+              title="Tactical Dark Canvas"
+            >
+              Dark
             </button>
           </div>
 
