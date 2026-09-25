@@ -1,0 +1,56 @@
+{
+  "accuracy": 0.994,
+  "test_samples": 500,
+  "features": [
+    "slope_deg",
+    "aspect_deg",
+    "twi",
+    "daily_rainfall_mm",
+    "api_11",
+    "soil_moisture",
+    "factor_of_safety"
+  ],
+  "feature_importance": {
+    "slope_deg": 4.651829242706299,
+    "aspect_deg": 0.2800537049770355,
+    "twi": 0.5294440984725952,
+    "daily_rainfall_mm": 0.36951279640197754,
+    "api_11": 4.185375213623047,
+    "soil_moisture": 1.9583863019943237,
+    "factor_of_safety": 15.673964500427246
+  },
+  "classification_report": {
+    "1": {
+      "precision": 0.9310344827586207,
+      "recall": 1.0,
+      "f1-score": 0.9642857142857143,
+      "support": 27.0
+    },
+    "2": {
+      "precision": 0.9879518072289156,
+      "recall": 0.9761904761904762,
+      "f1-score": 0.9820359281437125,
+      "support": 84.0
+    },
+    "3": {
+      "precision": 1.0,
+      "recall": 0.9974293059125964,
+      "f1-score": 0.9987129987129987,
+      "support": 389.0
+    },
+    "accuracy": 0.994,
+    "macro avg": {
+      "precision": 0.9729954299958455,
+      "recall": 0.9912065940343576,
+      "f1-score": 0.9816782137141419,
+      "support": 500.0
+    },
+    "weighted avg": {
+      "precision": 0.9942517656834234,
+      "recall": 0.994,
+      "f1-score": 0.9940521774982853,
+      "support": 500.0
+    }
+  },
+  "physics_boundary_rule": "If FS > 1.25 then risk_level <= 1 (suppress false Red/Orange alerts)"
+}
